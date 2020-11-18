@@ -34,6 +34,23 @@ migrate = Migrate(app, db)
 class Venue(db.Model):
     __tablename__ = 'Venue'
 
+# {
+#
+#         "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
+#         "website": "https://www.themusicalhop.com",
+#         "seeking_talent": True,
+#         "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
+#         "past_shows": [{
+#             "artist_id": 4,
+#             "artist_name": "Guns N Petals",
+#             "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+#             "start_time": "2019-05-21T21:30:00.000Z"
+#         }],
+#         "upcoming_shows": [],
+#         "past_shows_count": 1,
+#         "upcoming_shows_count": 0,
+#     }
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     city = db.Column(db.String(120))
@@ -42,6 +59,7 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
