@@ -4,7 +4,6 @@
 import json
 import dateutil.parser
 import babel
-from babel import Locale
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
@@ -137,16 +136,24 @@ def search_venues():
     # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    search_term = request.form.get('search_term', '')
+    all_venues = Venue.query.all()
     response = {
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
+        "count": 0,
+        "data": []
     }
+    for venue in all_venues:
+        num_upcoming_shows = len(
+            Show.query.filter(Show.start_time > datetime.datetime.now(), Show.venue_id == venue.id).all())
+        if search_term.lower() in venue.name.lower():
+            response["data"].append({
+                "id": venue.id,
+                "name": venue.name,
+                "num_upcoming_shows": num_upcoming_shows,
+            })
+    response["count"] = len(response["data"])
     return render_template('pages/search_venues.html', results=response,
-                           search_term=request.form.get('search_term', ''))
+                           search_term=search_term)
 
 
 @app.route('/venues/<int:venue_id>')
