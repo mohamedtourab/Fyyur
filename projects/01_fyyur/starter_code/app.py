@@ -311,7 +311,7 @@ def show_artist(artist_id):
         "name": "Guns N Petals",
         "genres": ["Rock n Roll"],
         "city": "San Francisco",
-        "state": "s",
+        "state": "CA",
         "phone": "326-123-5000",
         "website": "https://www.gunsnpetalsband.com",
         "facebook_link": "https://www.facebook.com/GunsNPetals",
