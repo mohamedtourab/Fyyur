@@ -11,6 +11,7 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from forms import *
 import datetime
+from sqlalchemy import exc
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -198,8 +199,8 @@ def create_venue_form():
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
     my_venue = {}
+    form = request.form
     try:
-        form = request.form
         my_venue = Venue(name=form['name'], city=form['city'], state=form['state'], address=form['address'],
                          phone=form['phone'], facebook_link=form['facebook_link'],
                          image_link="https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
@@ -208,9 +209,9 @@ def create_venue_submission():
         db.session.add(my_venue)
         db.session.commit()
         flash('Venue ' + request.form['name'] + ' was successfully listed!')
-    except:
+    except exc.SQLAlchemyError:
         db.session.rollback()
-        flash('An error occurred. Venue ' + my_venue.name + ' could not be listed.')
+        flash('An error occurred. Venue ' + form['name'] + ' could not be listed.')
     finally:
         db.session.close()
     # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
@@ -224,7 +225,7 @@ def delete_venue(venue_id):
     try:
         Venue.query.filter_by(id=venue_id).delete()
         db.session.commit()
-    except:
+    except exc.SQLAlchemyError:
         db.session.rollback()
     finally:
         db.session.close()
@@ -357,8 +358,8 @@ def edit_artist_submission(artist_id):
         "seeking_description": my_artist.seeking_description,
         "image_link": my_artist.image_link,
     }
+    form = request.form
     try:
-        form = request.form
         my_artist.name = form['name']
         my_artist.city = form['city']
         my_artist.state = form['state']
@@ -368,9 +369,9 @@ def edit_artist_submission(artist_id):
         db.session.add(my_artist)
         db.session.commit()
         flash('Artist ' + request.form['name'] + ' was successfully listed!')
-    except:
+    except exc.SQLAlchemyError:
         db.session.rollback()
-        flash('An error occurred. Artist ' + my_artist.name + ' could not be listed.')
+        flash('An error occurred. Artist ' + form['name'] + ' could not be listed.')
     finally:
         db.session.close()
 
@@ -422,7 +423,7 @@ def edit_venue_submission(venue_id):
         db.session.add(my_venue)
         db.session.commit()
         flash('Venue ' + request.form['name'] + ' was successfully listed!')
-    except:
+    except exc.SQLAlchemyError:
         db.session.rollback()
         flash('An error occurred. Venue ' + my_venue.name + ' could not be listed.')
     finally:
@@ -443,8 +444,8 @@ def create_artist_form():
 def create_artist_submission():
     # called upon submitting the new artist listing form
     my_artist = {}
+    form = request.form
     try:
-        form = request.form
         my_artist = Artist(name=form['name'], city=form['city'], state=form['state'],
                            phone=form['phone'], facebook_link=form['facebook_link'],
                            image_link="https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
@@ -453,9 +454,9 @@ def create_artist_submission():
         db.session.add(my_artist)
         db.session.commit()
         flash('Artist ' + request.form['name'] + ' was successfully listed!')
-    except:
+    except SQLAlchemy.exce:
         db.session.rollback()
-        flash('An error occurred. Artist ' + my_artist.name + ' could not be listed.')
+        flash('An error occurred. Artist ' + form['name'] + ' could not be listed.')
     finally:
         db.session.close()
     return render_template('pages/home.html')
@@ -501,7 +502,7 @@ def create_show_submission():
         db.session.add(show)
         db.session.commit()
         flash('Show was successfully listed!')
-    except:
+    except exc.SQLAlchemyError:
         db.session.rollback()
         flash('An error occurred. Show could not be listed.')
     finally:
