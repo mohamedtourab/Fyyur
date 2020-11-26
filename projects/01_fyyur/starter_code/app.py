@@ -149,6 +149,7 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
+    tests = db.session.query(Show).join(Artist).filter(Show.venue_id == venue_id).all()
     venue = Venue.query.get(venue_id)
     past_shows = Show.query.filter(Show.start_time <= datetime.datetime.now(), Show.venue_id == venue_id).all()
     future_shows = Show.query.filter(Show.start_time > datetime.datetime.now(), Show.venue_id == venue_id).all()
