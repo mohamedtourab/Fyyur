@@ -214,9 +214,14 @@ def create_app(test_config=None):
             questions = Question.query.filter(Question.id.notin_(previous_questions)).all()
         if len(questions) == 0:
             abort(404)
+        random_number = random.randint(0, len(questions)-1)
+        while random_number in previous_questions:
+            random_number = random.randint(0, len(questions)-1)
+        print("questions length " + str(len(questions)))
+        print("questions index " + str(random_number))
         return jsonify({
             'success': True,
-            'question': questions[0].format()
+            'question': questions[random_number].format()
         })
 
     '''
@@ -232,6 +237,14 @@ def create_app(test_config=None):
             "error": 404,
             "message": "Resource Not Found"
         }), 404
+
+    @app.errorhandler(405)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 405,
+            "message": "Method Not Allowed"
+        }), 405
 
     @app.errorhandler(422)
     def unprocessable(error):
