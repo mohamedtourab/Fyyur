@@ -214,11 +214,9 @@ def create_app(test_config=None):
             questions = Question.query.filter(Question.id.notin_(previous_questions)).all()
         if len(questions) == 0:
             abort(404)
-        random_number = random.randint(0, len(questions)-1)
+        random_number = random.randint(0, len(questions) - 1)
         while random_number in previous_questions:
-            random_number = random.randint(0, len(questions)-1)
-        print("questions length " + str(len(questions)))
-        print("questions index " + str(random_number))
+            random_number = random.randint(0, len(questions) - 1)
         return jsonify({
             'success': True,
             'question': questions[random_number].format()

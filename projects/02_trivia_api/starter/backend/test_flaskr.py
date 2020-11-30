@@ -95,6 +95,27 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(data['question']['question'], self.new_question['question'])
 
+    def test_405_if_wrong_url_when_create_new_question(self):
+        res = self.client().post('/questions/200', json=self.new_question)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 405)
+        self.assertEqual(data['success'], False)
+
+    def test_create_quiz(self):
+        res = self.client().post('/quizzes',
+                                 json={'previous_questions': [], 'quiz_category': {'id': 1, 'type': 'Science'}})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
+
+    def test_404_when_sending_wrong_category_when_create_quiz(self):
+        res = self.client().post('/quizzes',
+                                 json={'previous_questions': [], 'quiz_category': {'id': 100, 'type': 'Science'}})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
