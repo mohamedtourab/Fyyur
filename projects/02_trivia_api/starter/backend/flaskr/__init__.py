@@ -54,7 +54,8 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'categories': [category.format() for category in categories],
-            'total_categories': len(categories)
+            'totalCategories': len(categories),
+            'currentCategory': categories[0].format()
         })
 
     '''
@@ -70,17 +71,20 @@ def create_app(test_config=None):
     Clicking on the page numbers should update the questions. 
     '''
 
-    @app.route('/categories/<int:category_id>/questions')
-    def get_questions(category_id):
-        category = Category.query.get_or_404(category_id)
-        questions = Question.query.filter_by(category=category.type).order_by(Question.id).all()
+    @app.route('/questions')
+    def get_questions():
+        questions = Question.query.order_by(Question.id).all()
+        categories = Category.query.order_by(Category.id).all()
         current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
         if len(current_questions) == 0:
             abort(404)
         return jsonify({
             'success': True,
-            'current_questions': current_questions,
-            'total_questions': len(questions)
+            'questions': current_questions,
+            'totalQuestions': len(questions),
+            'categories': [category.format() for category in categories],
+            'currentCategory': categories[0].format()
+
         })
 
     '''
@@ -91,22 +95,20 @@ def create_app(test_config=None):
     This removal will persist in the database and when you refresh the page. 
     '''
 
-    @app.route('/categories/<int:category_id>/questions/<int:question_id>', methods=['DELETE'])
-    def delete_question(category_id, question_id):
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
         try:
-            category = Category.query.get_or_404(category_id)
-            question_to_delete = Question.query.filter_by(category=category.type).filter_by(
-                id=question_id).one_or_none()
+            question_to_delete = Question.query.get(question_id)
             if question_to_delete is None:
                 abort(404)
             question_to_delete.delete()
-            questions = Question.query.filter_by(category=category.type).order_by(Question.id).all()
+            questions = Question.query.order_by(Question.id).all()
             current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
             return jsonify({
                 'success': True,
                 'deleted': question_id,
                 'questions': current_questions,
-                'total_questions': len(questions)
+                'totalQuestions': len(questions)
             })
         except exc.SQLAlchemyError:
             abort(422)
@@ -124,6 +126,22 @@ def create_app(test_config=None):
     of the questions list in the "List" tab.  
     '''
 
+    @app.route('/questions', methods=['POST'])
+    def create_question():
+        question_json = request.get_json()['data']
+        question = Question(question=question_json['question'], answer=question_json['answer'],
+                            category=question_json['category'], difficulty=int(question_json['difficulty']))
+        try:
+            question.insert()
+            return jsonify({
+                'success': True,
+                'question': question.format(),
+            })
+        except exc.SQLAlchemyError:
+            abort(400)
+        finally:
+            db.session.close()
+
     '''
     @TODO: 
     Create a POST endpoint to get questions based on a search term. 
@@ -135,6 +153,21 @@ def create_app(test_config=None):
     Try using the word "title" to start. 
     '''
 
+    @app.route('/questions/search', methods=['POST'])
+    def search_questions():
+        search_term = request.get_json()['searchTerm']
+        questions = Question.query.filter(Question.question.ilike(f'%{search_term}%')).order_by(Question.id).all()
+        current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
+        if len(current_questions) == 0:
+            abort(404)
+        return jsonify({
+            'success': True,
+            'questions': current_questions,
+            'totalQuestions': len(questions),
+            'currentCategory': 1
+
+        })
+
     '''
     @TODO: 
     Create a GET endpoint to get questions based on category. 
@@ -143,6 +176,20 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that 
     category to be shown. 
     '''
+
+    @app.route('/categories/<int:category_id>/questions')
+    def get_category_questions(category_id):
+        category = Category.query.get(category_id)
+        questions = Question.query.filter_by(category=category_id).order_by(Question.id).all()
+        current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
+        if len(current_questions) == 0:
+            abort(404)
+        return jsonify({
+            'success': True,
+            'questions': current_questions,
+            'totalQuestions': len(questions),
+            'category': category.format()
+        })
 
     '''
     @TODO: 
@@ -156,10 +203,43 @@ def create_app(test_config=None):
     and shown whether they were correct or not. 
     '''
 
+    @app.route('/quizzes', methods=['POST'])
+    def start_quiz():
+        data = request.get_json()
+        previous_questions = data['previous_questions']
+        quiz_category = data['quiz_category']
+        if quiz_category['id'] != 0:
+            questions = Question.query.filter_by(category=int(quiz_category['id'])).filter(
+                Question.id.notin_(previous_questions)).all()
+        else:
+            questions = Question.query.filter(Question.id.notin_(previous_questions)).all()
+        if len(questions) == 0:
+            abort(404)
+        return jsonify({
+            'success': True,
+            'question': questions[0].format()
+        })
+
     '''
     @TODO: 
     Create error handlers for all expected errors 
     including 404 and 422. 
     '''
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 404,
+            "message": "Resource Not Found"
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": "Bad Request- Unprocessable"
+        }), 422
 
     return app
