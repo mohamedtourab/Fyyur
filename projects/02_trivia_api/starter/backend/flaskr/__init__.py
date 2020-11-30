@@ -97,7 +97,7 @@ def create_app(test_config=None):
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
-            question_to_delete = Question.query.get(question_id)
+            question_to_delete = Question.query.filter(Question.id == question_id).one_or_none()
             if question_to_delete is None:
                 abort(404)
             question_to_delete.delete()
@@ -128,6 +128,14 @@ def create_app(test_config=None):
     @app.route('/questions', methods=['POST'])
     def create_question():
         question_json = request.get_json()
+        question = question_json['question']
+        answer = question_json['answer']
+        category = question_json['category']
+        difficulty = question_json['difficulty']
+        if question is None or answer is None or len(question) == 0 or len(
+                answer) == 0 or category < 0 or not difficulty.isnumeric() or int(difficulty) < 1 or int(
+            difficulty) > 5:
+            abort(400)
         question = Question(question=question_json['question'], answer=question_json['answer'],
                             category=question_json['category'], difficulty=int(question_json['difficulty']))
         try:
