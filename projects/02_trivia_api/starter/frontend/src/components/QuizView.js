@@ -3,7 +3,7 @@ import $ from 'jquery';
 
 import '../stylesheets/QuizView.css';
 
-const questionsPerPlay = 2;
+const questionsPerPlay = 3;
 
 class QuizView extends Component {
   constructor(props){

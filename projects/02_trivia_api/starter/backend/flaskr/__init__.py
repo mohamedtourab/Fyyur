@@ -53,7 +53,7 @@ def create_app(test_config=None):
             abort(404)
         return jsonify({
             'success': True,
-            'categories': [category.type for category in categories],
+            'categories': {category.id: category.type for category in categories},
         })
 
     '''
@@ -76,12 +76,13 @@ def create_app(test_config=None):
         current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
         if len(current_questions) == 0:
             abort(404)
+
         return jsonify({
             'success': True,
             'questions': current_questions,
             'totalQuestions': len(questions),
-            'categories': [category.type for category in categories],
-            'currentCategory': categories[0].type
+            'categories': {category.id: category.type for category in categories},
+            'currentCategory': None
 
         })
 
@@ -126,7 +127,7 @@ def create_app(test_config=None):
 
     @app.route('/questions', methods=['POST'])
     def create_question():
-        question_json = request.get_json()['data']
+        question_json = request.get_json()
         question = Question(question=question_json['question'], answer=question_json['answer'],
                             category=question_json['category'], difficulty=int(question_json['difficulty']))
         try:
@@ -162,7 +163,7 @@ def create_app(test_config=None):
             'success': True,
             'questions': current_questions,
             'totalQuestions': len(questions),
-            'currentCategory': 0
+            'currentCategory': None
 
         })
 
@@ -177,7 +178,6 @@ def create_app(test_config=None):
 
     @app.route('/categories/<int:category_id>/questions')
     def get_category_questions(category_id):
-        category_id += 1
         category = Category.query.get(category_id)
         questions = Question.query.filter_by(category=category_id).order_by(Question.id).all()
         current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
@@ -187,7 +187,7 @@ def create_app(test_config=None):
             'success': True,
             'questions': current_questions,
             'totalQuestions': len(questions),
-            'category': category.type
+            'category': [category.front_end_format()]
         })
 
     '''
@@ -208,7 +208,7 @@ def create_app(test_config=None):
         previous_questions = data['previous_questions']
         quiz_category = data['quiz_category']
         if quiz_category['id'] != 0:
-            questions = Question.query.filter_by(category=int(quiz_category['id'])+1).filter(
+            questions = Question.query.filter_by(category=int(quiz_category['id'])).filter(
                 Question.id.notin_(previous_questions)).all()
         else:
             questions = Question.query.filter(Question.id.notin_(previous_questions)).all()

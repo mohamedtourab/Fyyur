@@ -85,3 +85,8 @@ class Category(db.Model):
             'id': self.id,
             'type': self.type
         }
+
+    def front_end_format(self):
+        return {
+            self.id: self.type
+        }
