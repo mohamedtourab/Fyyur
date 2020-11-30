@@ -23,7 +23,13 @@ class TriviaTestCase(unittest.TestCase):
         self.new_question = {
             'question': 'test',
             'answer': 'a',
-            'difficulty': 1,
+            'difficulty': '1',
+            'category': 2
+        }
+        self.invalid_question = {
+            'question': 'test',
+            'answer': '',
+            'difficulty': -1,
             'category': 2
         }
         # binds the app to the current context
@@ -114,6 +120,12 @@ class TriviaTestCase(unittest.TestCase):
                                  json={'previous_questions': [], 'quiz_category': {'id': 100, 'type': 'Science'}})
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+
+    def test_422_when_sending_invalid_data(self):
+        res = self.client().post('/questions', json=self.invalid_question)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
 
 

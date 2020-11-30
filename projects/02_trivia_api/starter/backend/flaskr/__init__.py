@@ -135,7 +135,7 @@ def create_app(test_config=None):
         if question is None or answer is None or len(question) == 0 or len(
                 answer) == 0 or category < 0 or not difficulty.isnumeric() or int(difficulty) < 1 or int(
             difficulty) > 5:
-            abort(400)
+            abort(422)
         question = Question(question=question_json['question'], answer=question_json['answer'],
                             category=question_json['category'], difficulty=int(question_json['difficulty']))
         try:
