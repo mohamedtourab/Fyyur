@@ -71,7 +71,7 @@ def get_drinks_details():
 #     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
 #         or appropriate status code indicating reason for failure
 # '''
-@app.route('/drinks')
+@app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
 def create_drink():
     unchecked_question = request.get_json()['drink']
@@ -102,7 +102,7 @@ def create_drink():
 #     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
 #         or appropriate status code indicating reason for failure
 # '''
-@app.route('/drinks/<drink_id>')
+@app.route('/drinks/<drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
 def update_drink(drink_id):
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
@@ -127,7 +127,7 @@ def update_drink(drink_id):
 #     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
 #         or appropriate status code indicating reason for failure
 # '''
-@app.route('/drinks/<drink_id>')
+@app.route('/drinks/<drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
 def delete_drink(drink_id):
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
