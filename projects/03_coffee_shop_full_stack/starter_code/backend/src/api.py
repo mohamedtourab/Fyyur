@@ -52,7 +52,7 @@ def get_drinks():
 # '''
 @app.route('/drinks-detail')
 @requires_auth('get:drinks-detail')
-def get_drinks_details():
+def get_drinks_details(jwt):
     drinks = Drink.query.order_by(Drink.id).all()
     if len(drinks) == 0:
         abort(404)
@@ -73,12 +73,13 @@ def get_drinks_details():
 # '''
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
-def create_drink():
-    unchecked_question = request.get_json()['drink']
+def create_drink(jwt):
+    unchecked_question = request.get_json()
     if unchecked_question['title'] is None or unchecked_question['recipe'] is None:
         abort(401)
-    drink = Drink(title=unchecked_question['title'], recipe=unchecked_question['recipe'])
-
+    print(json.dumps(unchecked_question['recipe']))
+    drink = Drink(title=unchecked_question['title'], recipe=json.dumps(unchecked_question['recipe']))
+    drink.insert()
     try:
         drink.insert()
         return jsonify({
@@ -104,17 +105,16 @@ def create_drink():
 # '''
 @app.route('/drinks/<drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def update_drink(drink_id):
+def update_drink(jwt, drink_id):
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
     if drink is None:
         abort(404)
-    unchecked_question = request.get_json()['drink']
-    if unchecked_question['title'] is None or unchecked_question['recipe'] is None:
+    unchecked_question = request.get_json()
+    if unchecked_question['title'] is None:
         abort(401)
     drink.title = unchecked_question['title']
-    drink.recipe = unchecked_question['recipe']
     drink.update()
-    return jsonify({"success": True, "drinks": drink.long()})
+    return jsonify({"success": True, "drinks": [drink.long()]})
 
 
 # '''
@@ -129,7 +129,7 @@ def update_drink(drink_id):
 # '''
 @app.route('/drinks/<drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
-def delete_drink(drink_id):
+def delete_drink(jwt, drink_id):
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
     if drink is None:
         abort(404)
