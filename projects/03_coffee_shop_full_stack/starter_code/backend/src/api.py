@@ -9,8 +9,7 @@ from .auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
 db = setup_db(app)
-CORS(app)
-
+CORS(app, resources={r"/*": {"origins": "*"}})
 '''
 @TODO uncomment the following line to initialize the database
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
@@ -32,7 +31,7 @@ https://dev-xp43zlgl.eu.auth0.com/authorize?audience=coffeeshop&response_type=to
 '''
 
 
-@app.route('/drinks')
+@app.route('/drinks', methods=['GET'])
 def get_drinks():
     drinks = Drink.query.order_by(Drink.id).all()
     if len(drinks) == 0:
@@ -53,7 +52,7 @@ def get_drinks():
 '''
 
 
-@app.route('/drinks-detail')
+@app.route('/drinks-detail', methods=['GET'])
 @requires_auth('get:drinks-detail')
 def get_drinks_details(jwt):
     drinks = Drink.query.order_by(Drink.id).all()
@@ -77,9 +76,7 @@ def create_drink(jwt):
     unchecked_question = request.get_json()
     if unchecked_question['title'] is None or unchecked_question['recipe'] is None:
         abort(401)
-    print(json.dumps(unchecked_question['recipe']))
     drink = Drink(title=unchecked_question['title'], recipe=json.dumps(unchecked_question['recipe']))
-    drink.insert()
     try:
         drink.insert()
         return jsonify({
@@ -109,8 +106,13 @@ def update_drink(jwt, drink_id):
     if unchecked_question['title'] is None:
         abort(401)
     drink.title = unchecked_question['title']
-    drink.update()
-    return jsonify({"success": True, "drinks": [drink.long()]})
+    try:
+        drink.update()
+        return jsonify({"success": True, "drinks": [drink.long()]})
+    except exc.SQLAlchemyError:
+        db.session.rollback()
+    finally:
+        db.session.close()
 
 
 '''
@@ -131,8 +133,13 @@ def delete_drink(jwt, drink_id):
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
     if drink is None:
         abort(404)
-    drink.delete()
-    return jsonify({"success": True, "delete": drink_id})
+    try:
+        drink.delete()
+        return jsonify({"success": True, "delete": drink_id})
+    except exc.SQLAlchemyError:
+        db.session.rollback()
+    finally:
+        db.session.close()
 
 
 # Error Handling
@@ -183,6 +190,24 @@ def not_allowed(error):
         "error": 405,
         "message": "Method Not Allowed"
     }), 405
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": 400,
+        "message": "Bad Request"
+    }), 400
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({
+        "success": False,
+        "error": 500,
+        "message": "Internal Server Error"
+    }), 500
 
 
 '''
